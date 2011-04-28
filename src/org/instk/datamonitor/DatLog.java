@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -16,9 +18,9 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.location.GpsSatellite;
 import android.location.GpsStatus;
 import android.location.GpsStatus.Listener;
-import android.location.GpsSatellite;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -44,6 +46,9 @@ public class DatLog extends TabActivity implements OnClickListener, SensorEventL
 	SensorManager mSenMan;
 	LocationManager mLocMan;
 	
+	Socket sendingSocket;
+	OutputStreamWriter socketStream;
+	
 	Button mbtn_start,mbtn_stop;
 	TabWidget mTabWidget;
 	
@@ -66,6 +71,15 @@ public class DatLog extends TabActivity implements OnClickListener, SensorEventL
 		CSensorStates lSenStates=mSenStates;
 		CLocProvStates lLPStates=mLPStates;
 		
+		// Point a socket at my computer
+		try {
+			sendingSocket = new Socket("192.168.0.18",8081);
+			socketStream = new OutputStreamWriter(sendingSocket.getOutputStream());
+		}
+		catch (IOException e) 
+		{
+			System.out.println("Error opening socket - oh noes!");
+		}
 		
 		//Read the prefs
 		read_prefs();
@@ -424,7 +438,7 @@ public class DatLog extends TabActivity implements OnClickListener, SensorEventL
 		if (file==null)
 			//Something is wrong
 			return;
-		
+	
 		long tim=System.currentTimeMillis();
 		int len=ev.values.length;
 		try {
@@ -432,10 +446,16 @@ public class DatLog extends TabActivity implements OnClickListener, SensorEventL
 			file.writeLong(tim);
 			file.writeLong(ev.timestamp);
 			file.writeInt(len);
+			
 			for (int i=0;i<len;i++)
 				file.writeFloat(ev.values[i]);
 		} catch (IOException e) {
 			e.printStackTrace();
+		}
+		
+		// Gyroscope
+		if (ev.sensor.getType() == 3) {
+			streamLog(String.format("3,%f", ev.values[0]));
 		}
 	}
 
@@ -457,11 +477,29 @@ public class DatLog extends TabActivity implements OnClickListener, SensorEventL
 			file.writeDouble(loc.getLongitude());
 			file.writeFloat(loc.getBearing());
 			file.writeFloat(loc.getSpeed());
+			
+			streamLog(String.format("GPS,%f,%f,%f,%f\n", 
+					loc.getLatitude(),
+					loc.getLongitude(),
+					loc.getAltitude(),
+					loc.getAccuracy()));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-
+	
+	public void streamLog(String message)
+	{
+		if (sendingSocket != null && sendingSocket.isConnected()) {
+			try {
+				socketStream.write(message);
+				socketStream.flush();
+			} catch (IOException e) {
+				System.out.println("Error writing! Whoops");
+			}
+		}
+	}
+	
 	public void onProviderDisabled(String arg0) {
 		mLV.addtext(arg0 + " provider disabled");
 	}

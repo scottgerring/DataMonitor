@@ -75,10 +75,7 @@ public class SensorInfo extends Activity implements OnItemSelectedListener{
 		
 		mName.setText(lSenList.get(arg2).getName());
 		mMaxRange.setText(Float.toString(lSenList.get(arg2).getMaximumRange()));
-		if (mAPILevel>8)
-			mMinDelay.setText(Integer.toString(lSenList.get(arg2).getMinDelay()));
-		else
-			mMinDelay.setText("Not defined for Level<9");
+		mMinDelay.setText("Not defined for Level<9");
 		mPower.setText(Float.toString(lSenList.get(arg2).getPower()));
 		mResolution.setText(Float.toString(lSenList.get(arg2).getResolution()));
 		mType.setText(Integer.toString(lSenList.get(arg2).getType()));

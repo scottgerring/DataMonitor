@@ -51,17 +51,11 @@ public class CSensorStates  implements Parcelable{
 				case (Sensor.TYPE_ACCELEROMETER):
 					names[i]="ACCELEROMETER";
 					break;
-				case (Sensor.TYPE_GRAVITY):
-					names[i]="GRAVITY";
-					break;
 				case (Sensor.TYPE_GYROSCOPE):
 					names[i]="GYROSCOPE";
 					break;
 				case (Sensor.TYPE_LIGHT):
 					names[i]="LIGHT";
-					break;
-				case (Sensor.TYPE_LINEAR_ACCELERATION):
-					names[i]="LINEAR_ACCELERATION";
 					break;
 				case (Sensor.TYPE_MAGNETIC_FIELD):
 					names[i]="MAGNETIC_FIELD";
@@ -74,9 +68,6 @@ public class CSensorStates  implements Parcelable{
 					break;
 				case (Sensor.TYPE_PROXIMITY):
 					names[i]="PROXIMITY";
-					break;
-				case (Sensor.TYPE_ROTATION_VECTOR):
-					names[i]="ROTATION_VECTOR";
 					break;
 				case (Sensor.TYPE_TEMPERATURE):
 					names[i]="TEMPERATURE";
