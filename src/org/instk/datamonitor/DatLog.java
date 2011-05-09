@@ -45,15 +45,13 @@ public class DatLog extends TabActivity implements OnClickListener, SensorEventL
 	
 	SensorManager mSenMan;
 	LocationManager mLocMan;
-	
-	Socket sendingSocket;
-	OutputStreamWriter socketStream;
-	
+
 	Button mbtn_start,mbtn_stop;
 	TabWidget mTabWidget;
 	
 	private DataOutputStream[] fout=new DataOutputStream[3];
 	private SimpleDateFormat dtf= new SimpleDateFormat("dd.HH.mm.ss");
+	private YachtieClient yachtieClient;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -71,15 +69,8 @@ public class DatLog extends TabActivity implements OnClickListener, SensorEventL
 		CSensorStates lSenStates=mSenStates;
 		CLocProvStates lLPStates=mLPStates;
 		
-		// Point a socket at my computer
-		try {
-			sendingSocket = new Socket("192.168.0.18",8081);
-			socketStream = new OutputStreamWriter(sendingSocket.getOutputStream());
-		}
-		catch (IOException e) 
-		{
-			System.out.println("Error opening socket - oh noes!");
-		}
+		// Point a socket at my EC2 instance
+		yachtieClient = new YachtieClient("ec2-174-129-188-30.compute-1.amazonaws.com",8081);
 		
 		//Read the prefs
 		read_prefs();
@@ -454,8 +445,8 @@ public class DatLog extends TabActivity implements OnClickListener, SensorEventL
 		}
 		
 		// Gyroscope
-		if (ev.sensor.getType() == 3) {
-			streamLog(String.format("3,%f", ev.values[0]));
+		if (ev.sensor.getType() == 3 && yachtieClient.isOpen()) {
+			yachtieClient.recordHeading(ev.values[0]);
 		}
 	}
 
@@ -478,27 +469,13 @@ public class DatLog extends TabActivity implements OnClickListener, SensorEventL
 			file.writeFloat(loc.getBearing());
 			file.writeFloat(loc.getSpeed());
 			
-			streamLog(String.format("GPS,%f,%f,%f,%f\n", 
-					loc.getLatitude(),
-					loc.getLongitude(),
-					loc.getAltitude(),
-					loc.getAccuracy()));
+			if (yachtieClient.isOpen())
+				yachtieClient.recordGPS(loc.getLatitude(), loc.getLongitude(), loc.getAltitude(), loc.getAccuracy());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
-	
-	public void streamLog(String message)
-	{
-		if (sendingSocket != null && sendingSocket.isConnected()) {
-			try {
-				socketStream.write(message);
-				socketStream.flush();
-			} catch (IOException e) {
-				System.out.println("Error writing! Whoops");
-			}
-		}
-	}
+
 	
 	public void onProviderDisabled(String arg0) {
 		mLV.addtext(arg0 + " provider disabled");
