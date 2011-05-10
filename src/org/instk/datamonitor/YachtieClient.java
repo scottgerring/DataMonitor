@@ -66,7 +66,7 @@ public class YachtieClient {
 	}
 	
 	public boolean isOpen() {
-		return sendingSocket.isConnected();
+		return sendingSocket != null && sendingSocket.isConnected();
 	}
 	
 	private void streamLog(String message)
